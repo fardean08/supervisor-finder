@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/app_user.dart';
+import '../models/request.dart';
 import '../models/staff_profile.dart';
 import '../repositories/staff_repository.dart';
 import '../services/auth_service.dart';
@@ -33,6 +34,7 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
   static const _matchingService = MatchingService();
 
   List<StaffProfile> _profiles = [];
+  Map<String, int> _acceptedCounts = {};
   bool _isLoading = true;
   String _query = '';
   late AppUser _user;
@@ -46,11 +48,24 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
 
   Future<void> _load() async {
     final profiles = await widget.repository.fetchAllProfiles();
+    final requests = await widget.requestRepository.fetchAllRequests();
+
+    final acceptedCounts = <String, int>{};
+    for (final request in requests) {
+      if (request.status != RequestStatus.accepted) continue;
+      acceptedCounts[request.staffId] = (acceptedCounts[request.staffId] ?? 0) + 1;
+    }
+
     if (!mounted) return;
     setState(() {
       _profiles = profiles;
+      _acceptedCounts = acceptedCounts;
       _isLoading = false;
     });
+  }
+
+  bool _isFullyBooked(StaffProfile profile) {
+    return (_acceptedCounts[profile.uid] ?? 0) >= profile.maxStudents;
   }
 
   List<StaffProfile> get _filteredProfiles {
@@ -183,6 +198,7 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
                             _user.interests,
                             profile.areasOfInterest,
                           ),
+                          isFullyBooked: _isFullyBooked(profile),
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -191,9 +207,10 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
                                           profile: profile,
                                           currentUser: _user,
                                           requestRepository: widget.requestRepository,
+                                          isFullyBooked: _isFullyBooked(profile),
                                         ),
                               ),
-                            );
+                            ).then((_) => _load());
                           },
                         ),
                       ),
