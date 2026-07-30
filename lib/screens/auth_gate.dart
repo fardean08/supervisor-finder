@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../models/app_user.dart';
 import '../repositories/staff_repository.dart';
+import '../repositories/user_repository.dart';
 import '../services/auth_service.dart';
+import 'admin_dashboard_screen.dart';
 import 'auth_screen.dart';
 import 'staff_dashboard_screen.dart';
 import 'student_browse_screen.dart';
@@ -13,12 +15,14 @@ class AuthGate extends StatelessWidget {
     required this.authService,
     required this.staffRepository,
     required this.requestRepository,
+    required this.userRepository,
     required this.firebaseReady,
   });
 
   final AuthService authService;
   final StaffRepository staffRepository;
   final dynamic requestRepository;
+  final UserRepository userRepository;
   final bool firebaseReady;
 
   @override
@@ -38,6 +42,15 @@ class AuthGate extends StatelessWidget {
           return AuthScreen(
             authService: authService,
             firebaseReady: firebaseReady,
+          );
+        }
+
+        if (user.isAdmin) {
+          return AdminDashboardScreen(
+            authService: authService,
+            staffRepository: staffRepository,
+            requestRepository: requestRepository,
+            userRepository: userRepository,
           );
         }
 
