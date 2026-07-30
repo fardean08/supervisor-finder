@@ -15,10 +15,15 @@ abstract class StaffRepository {
     required String email,
   });
 
+  /// Fetches one profile without creating it. Returns null if the staff
+  /// member has no profile yet. Used for capacity checks.
+  Future<StaffProfile?> fetchProfile(String uid);
+
   Future<void> updateProfileDetails({
     required String uid,
     required String department,
     required String bio,
+    required int maxStudents,
   });
 
   Future<void> addAreaOfInterest({
@@ -103,14 +108,23 @@ class FirestoreStaffRepository implements StaffRepository {
   }
 
   @override
+  Future<StaffProfile?> fetchProfile(String uid) async {
+    final doc = await _profileDoc(uid).get();
+    if (!doc.exists) return null;
+    return _readProfile(doc);
+  }
+
+  @override
   Future<void> updateProfileDetails({
     required String uid,
     required String department,
     required String bio,
+    required int maxStudents,
   }) {
     return _profileDoc(uid).update({
       'department': department,
       'bio': bio,
+      'maxStudents': maxStudents,
     });
   }
 
@@ -181,15 +195,22 @@ class MemoryStaffRepository implements StaffRepository {
   }
 
   @override
+  Future<StaffProfile?> fetchProfile(String uid) async {
+    return _profiles[uid];
+  }
+
+  @override
   Future<void> updateProfileDetails({
     required String uid,
     required String department,
     required String bio,
+    required int maxStudents,
   }) async {
     final profile = _profiles[uid];
     if (profile == null) return;
 
-    _profiles[uid] = profile.copyWith(department: department, bio: bio);
+    _profiles[uid] =
+        profile.copyWith(department: department, bio: bio, maxStudents: maxStudents);
   }
 
   @override
