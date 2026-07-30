@@ -146,6 +146,11 @@ class _AuthScreenState extends State<AuthScreen> {
                             label: Text('Staff'),
                             icon: Icon(Icons.badge_outlined),
                           ),
+                          ButtonSegment(
+                            value: UserRole.admin,
+                            label: Text('Admin'),
+                            icon: Icon(Icons.admin_panel_settings_outlined),
+                          ),
                         ],
                         selected: {_role},
                         onSelectionChanged: (selection) {
