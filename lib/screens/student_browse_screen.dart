@@ -6,6 +6,7 @@ import '../models/staff_profile.dart';
 import '../repositories/staff_repository.dart';
 import '../services/auth_service.dart';
 import '../services/matching_service.dart';
+import '../theme/theme_controller.dart';
 import '../widgets/area_chips_editor.dart';
 import '../widgets/staff_summary_card.dart';
 import 'staff_profile_detail_screen.dart';
@@ -19,6 +20,7 @@ class StudentBrowseScreen extends StatefulWidget {
     required this.repository,
     required this.requestRepository,
     required this.firebaseReady,
+    required this.themeController,
   });
 
   final AppUser user;
@@ -26,6 +28,7 @@ class StudentBrowseScreen extends StatefulWidget {
   final StaffRepository repository;
   final dynamic requestRepository;
   final bool firebaseReady;
+  final ThemeController themeController;
 
   @override
   State<StudentBrowseScreen> createState() => _StudentBrowseScreenState();
@@ -139,6 +142,14 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
       appBar: AppBar(
         title: const Text('Find a supervisor'),
         actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: widget.themeController,
+            builder: (context, mode, _) => IconButton(
+              tooltip: mode == ThemeMode.dark ? 'Switch to light mode' : 'Switch to dark mode',
+              icon: Icon(mode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+              onPressed: widget.themeController.toggle,
+            ),
+          ),
           IconButton(
             tooltip: 'My requests',
             icon: const Icon(Icons.receipt_long_outlined),
