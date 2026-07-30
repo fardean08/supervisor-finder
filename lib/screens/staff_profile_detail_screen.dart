@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../models/app_user.dart';
 import '../models/staff_profile.dart';
 import '../widgets/area_chips_editor.dart';
 import '../widgets/project_idea_card.dart';
 
 class StaffProfileDetailScreen extends StatelessWidget {
-  const StaffProfileDetailScreen({super.key, required this.profile});
+  const StaffProfileDetailScreen({
+    super.key,
+    required this.profile,
+    required this.currentUser,
+    required this.requestRepository,
+  });
 
   final StaffProfile profile;
+  final AppUser currentUser;
+  final dynamic requestRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +91,26 @@ class StaffProfileDetailScreen extends StatelessWidget {
             for (final idea in profile.projectIdeas)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: ProjectIdeaCard(idea: idea),
+                child: ProjectIdeaCard(
+                  idea: idea,
+                  onRequest: () async {
+                    try {
+                      await requestRepository.createRequest(
+                        studentId: currentUser.uid,
+                        staffId: profile.uid,
+                        ideaId: idea.id,
+                      );
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Request sent')),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to send request')),
+                      );
+                    }
+                  },
+                ),
               ),
         ],
       ),
