@@ -4,6 +4,7 @@ import '../models/app_user.dart';
 import '../repositories/staff_repository.dart';
 import '../repositories/user_repository.dart';
 import '../services/auth_service.dart';
+import '../theme/theme_controller.dart';
 import 'admin_dashboard_screen.dart';
 import 'auth_screen.dart';
 import 'staff_dashboard_screen.dart';
@@ -16,6 +17,7 @@ class AuthGate extends StatelessWidget {
     required this.staffRepository,
     required this.requestRepository,
     required this.userRepository,
+    required this.themeController,
     required this.firebaseReady,
   });
 
@@ -23,6 +25,7 @@ class AuthGate extends StatelessWidget {
   final StaffRepository staffRepository;
   final dynamic requestRepository;
   final UserRepository userRepository;
+  final ThemeController themeController;
   final bool firebaseReady;
 
   @override
@@ -51,6 +54,7 @@ class AuthGate extends StatelessWidget {
             staffRepository: staffRepository,
             requestRepository: requestRepository,
             userRepository: userRepository,
+            themeController: themeController,
           );
         }
 
@@ -61,6 +65,7 @@ class AuthGate extends StatelessWidget {
             repository: staffRepository,
             requestRepository: requestRepository,
             firebaseReady: firebaseReady,
+            themeController: themeController,
           );
         }
 
@@ -70,6 +75,7 @@ class AuthGate extends StatelessWidget {
           repository: staffRepository,
           requestRepository: requestRepository,
           firebaseReady: firebaseReady,
+          themeController: themeController,
         );
       },
     );
