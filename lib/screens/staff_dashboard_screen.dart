@@ -1,0 +1,268 @@
+import 'package:flutter/material.dart';
+
+import '../models/app_user.dart';
+import '../models/project_idea.dart';
+import '../models/staff_profile.dart';
+import '../repositories/staff_repository.dart';
+import '../services/auth_service.dart';
+import '../widgets/area_chips_editor.dart';
+import '../widgets/project_idea_card.dart';
+import '../widgets/project_idea_form.dart';
+
+class StaffDashboardScreen extends StatefulWidget {
+  const StaffDashboardScreen({
+    super.key,
+    required this.user,
+    required this.authService,
+    required this.repository,
+    required this.firebaseReady,
+  });
+
+  final AppUser user;
+  final AuthService authService;
+  final StaffRepository repository;
+  final bool firebaseReady;
+
+  @override
+  State<StaffDashboardScreen> createState() => _StaffDashboardScreenState();
+}
+
+class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
+  StaffProfile? _profile;
+  bool _isLoading = true;
+  late final TextEditingController _departmentController;
+  late final TextEditingController _bioController;
+
+  @override
+  void initState() {
+    super.initState();
+    _departmentController = TextEditingController();
+    _bioController = TextEditingController();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _departmentController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final profile = await widget.repository.fetchOrCreateProfile(
+      uid: widget.user.uid,
+      name: widget.user.name,
+      email: widget.user.email,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _profile = profile;
+      _departmentController.text = profile.department;
+      _bioController.text = profile.bio;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _saveDetails() async {
+    await widget.repository.updateProfileDetails(
+      uid: widget.user.uid,
+      department: _departmentController.text.trim(),
+      bio: _bioController.text.trim(),
+    );
+
+    setState(() {
+      _profile = _profile?.copyWith(
+        department: _departmentController.text.trim(),
+        bio: _bioController.text.trim(),
+      );
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profile details saved')),
+    );
+  }
+
+  Future<void> _addArea(String area) async {
+    await widget.repository.addAreaOfInterest(uid: widget.user.uid, area: area);
+    setState(() {
+      _profile = _profile?.copyWith(
+        areasOfInterest: [...?_profile?.areasOfInterest, area],
+      );
+    });
+  }
+
+  Future<void> _removeArea(String area) async {
+    await widget.repository.removeAreaOfInterest(uid: widget.user.uid, area: area);
+    setState(() {
+      _profile = _profile?.copyWith(
+        areasOfInterest:
+            _profile?.areasOfInterest.where((item) => item != area).toList() ?? [],
+      );
+    });
+  }
+
+  Future<void> _addIdea() async {
+    final idea = await showProjectIdeaForm(
+      context,
+      areaOptions: _profile?.areasOfInterest ?? const [],
+    );
+    if (idea == null) return;
+
+    await widget.repository.addProjectIdea(uid: widget.user.uid, idea: idea);
+    await _load();
+  }
+
+  Future<void> _editIdea(ProjectIdea idea) async {
+    final updated = await showProjectIdeaForm(
+      context,
+      existing: idea,
+      areaOptions: _profile?.areasOfInterest ?? const [],
+    );
+    if (updated == null) return;
+
+    await widget.repository.updateProjectIdea(
+      uid: widget.user.uid,
+      idea: updated.copyWith(id: idea.id),
+    );
+    await _load();
+  }
+
+  Future<void> _deleteIdea(ProjectIdea idea) async {
+    await widget.repository.deleteProjectIdea(uid: widget.user.uid, ideaId: idea.id);
+    setState(() {
+      _profile = _profile?.copyWith(
+        projectIdeas:
+            _profile?.projectIdeas.where((item) => item.id != idea.id).toList() ?? [],
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My supervisor profile'),
+        actions: [
+          IconButton(
+            tooltip: 'Sign out',
+            icon: const Icon(Icons.logout),
+            onPressed: () => widget.authService.signOut(),
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  if (!widget.firebaseReady)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7E6),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        'Running without Firebase: your profile is stored locally for this session only.',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF92610C)),
+                      ),
+                    ),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(widget.user.name, style: Theme.of(context).textTheme.titleLarge),
+                          Text(widget.user.email, style: const TextStyle(color: Colors.grey)),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _departmentController,
+                            decoration: const InputDecoration(labelText: 'Department'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _bioController,
+                            decoration: const InputDecoration(labelText: 'Short bio'),
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: FilledButton(
+                              onPressed: _saveDetails,
+                              child: const Text('Save details'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Areas of interest', style: Theme.of(context).textTheme.titleMedium),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'These help students find you when browsing for a supervisor.',
+                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                          const SizedBox(height: 12),
+                          AreaChipsEditor(
+                            areas: _profile?.areasOfInterest ?? const [],
+                            onAdd: _addArea,
+                            onRemove: _removeArea,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Project ideas', style: Theme.of(context).textTheme.titleMedium),
+                      FilledButton.icon(
+                        onPressed: _addIdea,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add idea'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if ((_profile?.projectIdeas ?? const []).isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'No project ideas yet. Add one so students can find it.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    )
+                  else
+                    for (final idea in _profile!.projectIdeas)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: ProjectIdeaCard(
+                          idea: idea,
+                          onEdit: () => _editIdea(idea),
+                          onDelete: () => _deleteIdea(idea),
+                        ),
+                      ),
+                ],
+              ),
+            ),
+    );
+  }
+}
