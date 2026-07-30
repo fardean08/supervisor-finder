@@ -173,6 +173,14 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
       appBar: AppBar(
         title: const Text('My supervisor profile'),
         actions: [
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: widget.themeController,
+            builder: (context, mode, _) => IconButton(
+              tooltip: mode == ThemeMode.dark ? 'Switch to light mode' : 'Switch to dark mode',
+              icon: Icon(mode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+              onPressed: widget.themeController.toggle,
+            ),
+          ),
           Stack(
             children: [
               IconButton(
