@@ -4,6 +4,7 @@ import '../models/app_user.dart';
 import '../models/staff_profile.dart';
 import '../repositories/request_repository.dart';
 import '../widgets/area_chips_editor.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/project_idea_card.dart';
 
 class StaffProfileDetailScreen extends StatelessWidget {
@@ -105,12 +106,9 @@ class StaffProfileDetailScreen extends StatelessWidget {
           Text('Project ideas', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           if (profile.projectIdeas.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                'This supervisor hasn\'t posted any project ideas yet.',
-                style: TextStyle(color: Colors.grey),
-              ),
+            const EmptyState(
+              icon: Icons.lightbulb_outline,
+              message: 'This supervisor hasn\'t posted any project ideas yet.',
             )
           else
             for (final idea in profile.projectIdeas)
