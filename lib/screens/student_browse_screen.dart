@@ -4,6 +4,8 @@ import '../models/app_user.dart';
 import '../models/staff_profile.dart';
 import '../repositories/staff_repository.dart';
 import '../services/auth_service.dart';
+import '../services/matching_service.dart';
+import '../widgets/area_chips_editor.dart';
 import '../widgets/staff_summary_card.dart';
 import 'staff_profile_detail_screen.dart';
 
@@ -28,13 +30,17 @@ class StudentBrowseScreen extends StatefulWidget {
 }
 
 class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
+  static const _matchingService = MatchingService();
+
   List<StaffProfile> _profiles = [];
   bool _isLoading = true;
   String _query = '';
+  late AppUser _user;
 
   @override
   void initState() {
     super.initState();
+    _user = widget.user;
     _load();
   }
 
@@ -48,20 +54,65 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
   }
 
   List<StaffProfile> get _filteredProfiles {
-    if (_query.trim().isEmpty) return _profiles;
-
     final query = _query.toLowerCase();
 
-    return _profiles.where((profile) {
-      final matchesName = profile.name.toLowerCase().contains(query);
-      final matchesDepartment = profile.department.toLowerCase().contains(query);
-      final matchesArea =
-          profile.areasOfInterest.any((area) => area.toLowerCase().contains(query));
-      final matchesIdea = profile.projectIdeas
-          .any((idea) => idea.title.toLowerCase().contains(query));
+    final filtered = _query.trim().isEmpty
+        ? _profiles
+        : _profiles.where((profile) {
+            final matchesName = profile.name.toLowerCase().contains(query);
+            final matchesDepartment = profile.department.toLowerCase().contains(query);
+            final matchesArea =
+                profile.areasOfInterest.any((area) => area.toLowerCase().contains(query));
+            final matchesIdea = profile.projectIdeas
+                .any((idea) => idea.title.toLowerCase().contains(query));
 
-      return matchesName || matchesDepartment || matchesArea || matchesIdea;
-    }).toList();
+            return matchesName || matchesDepartment || matchesArea || matchesIdea;
+          }).toList();
+
+    return _matchingService.rankByInterest(filtered, _user.interests);
+  }
+
+  Future<void> _editInterests() async {
+    var localInterests = [..._user.interests];
+
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('My areas of interest'),
+              content: SizedBox(
+                width: 360,
+                child: AreaChipsEditor(
+                  areas: localInterests,
+                  onAdd: (area) => setDialogState(() => localInterests = [...localInterests, area]),
+                  onRemove: (area) => setDialogState(
+                    () => localInterests = localInterests.where((item) => item != area).toList(),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(localInterests),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == null) return;
+
+    await widget.authService.updateInterests(uid: _user.uid, interests: result);
+    if (!mounted) return;
+    setState(() => _user = _user.copyWith(interests: result));
   }
 
   @override
