@@ -17,6 +17,7 @@ class AuthGate extends StatelessWidget {
 
   final AuthService authService;
   final StaffRepository staffRepository;
+  final dynamic requestRepository;
   final bool firebaseReady;
 
   @override
@@ -52,6 +53,7 @@ class AuthGate extends StatelessWidget {
           user: user,
           authService: authService,
           repository: staffRepository,
+          requestRepository: requestRepository,
           firebaseReady: firebaseReady,
         );
       },

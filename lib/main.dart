@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
 import 'repositories/staff_repository.dart';
+import 'repositories/request_repository.dart';
 import 'screens/auth_gate.dart';
 import 'services/auth_service.dart';
 
@@ -38,6 +39,9 @@ class FypSupervisorFinderApp extends StatelessWidget {
 
     final StaffRepository staffRepository =
         firebaseReady ? FirestoreStaffRepository() : MemoryStaffRepository();
+
+    final requestRepository =
+      firebaseReady ? FirestoreRequestRepository() : MemoryRequestRepository();
 
     return MaterialApp(
       title: 'FYP Supervisor Finder',
@@ -87,6 +91,7 @@ class FypSupervisorFinderApp extends StatelessWidget {
       home: AuthGate(
         authService: authService,
         staffRepository: staffRepository,
+        requestRepository: requestRepository,
         firebaseReady: firebaseReady,
       ),
     );

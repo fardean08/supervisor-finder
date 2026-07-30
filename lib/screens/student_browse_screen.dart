@@ -19,6 +19,7 @@ class StudentBrowseScreen extends StatefulWidget {
   final AppUser user;
   final AuthService authService;
   final StaffRepository repository;
+  final dynamic requestRepository;
   final bool firebaseReady;
 
   @override
@@ -119,13 +120,17 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
                     for (final profile in profiles)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: StaffSummaryCard(
+                              child: StaffSummaryCard(
                           profile: profile,
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    StaffProfileDetailScreen(profile: profile),
+                                        StaffProfileDetailScreen(
+                                          profile: profile,
+                                          currentUser: widget.user,
+                                          requestRepository: widget.requestRepository,
+                                        ),
                               ),
                             );
                           },
