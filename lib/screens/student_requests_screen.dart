@@ -4,6 +4,7 @@ import '../models/project_idea.dart';
 import '../models/request.dart';
 import '../models/staff_profile.dart';
 import '../repositories/staff_repository.dart';
+import '../widgets/empty_state.dart';
 
 /// Shows a student's own supervisor requests, grouped by status.
 class StudentRequestsScreen extends StatefulWidget {
@@ -70,20 +71,10 @@ class _StudentRequestsScreenState extends State<StudentRequestsScreen> {
               child: _requests.isEmpty
                   ? ListView(
                       children: const [
-                        Padding(
-                          padding: EdgeInsets.symmetric(vertical: 64),
-                          child: Center(
-                            child: Column(
-                              children: [
-                                Icon(Icons.inbox_outlined, size: 48, color: Colors.grey),
-                                SizedBox(height: 12),
-                                Text(
-                                  'You haven\'t requested any projects yet.',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                          ),
+                        EmptyState(
+                          icon: Icons.inbox_outlined,
+                          message: 'You haven\'t requested any projects yet.',
+                          hint: 'Browse supervisors and send a request to get started.',
                         ),
                       ],
                     )
