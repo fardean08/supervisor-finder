@@ -13,6 +13,7 @@ class ProjectIdeaCard extends StatelessWidget {
   final ProjectIdea idea;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onRequest;
 
   bool get isEditable => onEdit != null || onDelete != null;
 
@@ -58,6 +59,12 @@ class ProjectIdeaCard extends StatelessWidget {
                   if (onDelete != null)
                     const PopupMenuItem(value: 'delete', child: Text('Delete')),
                 ],
+              ),
+            if (!isEditable && onRequest != null)
+              IconButton(
+                icon: const Icon(Icons.send),
+                tooltip: 'Request this project',
+                onPressed: onRequest,
               ),
           ],
         ),
