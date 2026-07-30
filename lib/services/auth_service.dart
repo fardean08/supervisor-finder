@@ -13,6 +13,7 @@ abstract class AuthService {
     required String email,
     required String password,
     required UserRole role,
+    List<String> interests = const [],
   });
 
   Future<AppUser> signIn({
@@ -21,6 +22,13 @@ abstract class AuthService {
   });
 
   Future<void> signOut();
+
+  /// Updates the current student's areas of interest, used to rank staff
+  /// profiles by overlap on the browse screen.
+  Future<void> updateInterests({
+    required String uid,
+    required List<String> interests,
+  });
 }
 
 /// Real Firebase implementation. Email/password identity comes from
@@ -50,6 +58,7 @@ class FirebaseAuthService implements AuthService {
     required String email,
     required String password,
     required UserRole role,
+    List<String> interests = const [],
   }) async {
     final normalizedEmail = email.toLowerCase().trim();
 
@@ -67,6 +76,7 @@ class FirebaseAuthService implements AuthService {
         'name': name,
         'email': normalizedEmail,
         'role': role.name,
+        'interests': interests,
       });
 
       return AppUser(
@@ -74,6 +84,7 @@ class FirebaseAuthService implements AuthService {
         email: normalizedEmail,
         name: name,
         role: role,
+        interests: interests,
       );
     } on firebase_auth.FirebaseAuthException catch (error) {
       if (error.code == 'email-already-in-use') {
@@ -117,6 +128,14 @@ class FirebaseAuthService implements AuthService {
     return _firebaseAuth.signOut();
   }
 
+  @override
+  Future<void> updateInterests({
+    required String uid,
+    required List<String> interests,
+  }) {
+    return _usersCollection.doc(uid).update({'interests': interests});
+  }
+
   Future<AppUser?> _mapUser(firebase_auth.User? user) async {
     if (user == null) {
       return null;
@@ -130,6 +149,9 @@ class FirebaseAuthService implements AuthService {
       email: user.email ?? data?['email'] as String? ?? '',
       name: user.displayName ?? data?['name'] as String? ?? 'User',
       role: userRoleFromString(data?['role'] as String?),
+      interests: List<String>.from(
+        (data?['interests'] as List<dynamic>?) ?? const [],
+      ),
     );
   }
 }
@@ -137,16 +159,21 @@ class FirebaseAuthService implements AuthService {
 /// In-memory fallback used when Firebase isn't configured, so the app is
 /// still fully usable (with local-only data) straight after checkout.
 class LocalAuthService implements AuthService {
+  LocalAuthService({this.onUserChanged}) {
+    Future<void>.microtask(() => _controller.add(_currentUser));
+  }
+
   final StreamController<AppUser?> _controller =
       StreamController<AppUser?>.broadcast();
 
-  final Map<String, ({String name, String password, UserRole role})> _users = {};
+  final Map<String, ({String name, String password, UserRole role, List<String> interests})>
+      _users = {};
+
+  /// Called whenever a user is created or edited, so an external directory
+  /// (e.g. for the admin dashboard) can keep a list of all local accounts.
+  final void Function(AppUser user)? onUserChanged;
 
   AppUser? _currentUser;
-
-  LocalAuthService() {
-    Future<void>.microtask(() => _controller.add(_currentUser));
-  }
 
   @override
   Stream<AppUser?> get authStateChanges => _controller.stream;
@@ -157,6 +184,7 @@ class LocalAuthService implements AuthService {
     required String email,
     required String password,
     required UserRole role,
+    List<String> interests = const [],
   }) async {
     final lowerEmail = email.toLowerCase();
 
@@ -164,16 +192,19 @@ class LocalAuthService implements AuthService {
       throw Exception('An account with this email already exists.');
     }
 
-    _users[lowerEmail] = (name: name, password: password, role: role);
+    _users[lowerEmail] =
+        (name: name, password: password, role: role, interests: interests);
 
     _currentUser = AppUser(
       uid: lowerEmail,
       email: lowerEmail,
       name: name,
       role: role,
+      interests: interests,
     );
 
     _controller.add(_currentUser);
+    onUserChanged?.call(_currentUser!);
     return _currentUser!;
   }
 
@@ -198,10 +229,37 @@ class LocalAuthService implements AuthService {
       email: lowerEmail,
       name: user.name,
       role: user.role,
+      interests: user.interests,
     );
 
     _controller.add(_currentUser);
+    onUserChanged?.call(_currentUser!);
     return _currentUser!;
+  }
+
+  @override
+  Future<void> updateInterests({
+    required String uid,
+    required List<String> interests,
+  }) async {
+    final existing = _users[uid];
+    if (existing == null) return;
+
+    _users[uid] = (
+      name: existing.name,
+      password: existing.password,
+      role: existing.role,
+      interests: interests,
+    );
+
+    if (_currentUser?.uid == uid) {
+      _currentUser = _currentUser!.copyWith(interests: interests);
+      _controller.add(_currentUser);
+    }
+
+    onUserChanged?.call(
+      AppUser(uid: uid, email: uid, name: existing.name, role: existing.role, interests: interests),
+    );
   }
 
   @override
