@@ -4,6 +4,7 @@ import '../models/app_user.dart';
 import '../models/project_idea.dart';
 import '../models/request.dart';
 import '../models/staff_profile.dart';
+import '../repositories/request_repository.dart';
 import '../repositories/staff_repository.dart';
 import '../services/auth_service.dart';
 import '../widgets/area_chips_editor.dart';
@@ -178,6 +179,12 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                     builder: (context) => _PendingRequestsScreen(
                       requests: _incoming,
                       onAction: (id, status) async {
+                        if (status == RequestStatus.accepted && _isFullyBooked) {
+                          throw SupervisorFullyBookedException(
+                            'You are already supervising $_maxStudents student${_maxStudents == 1 ? '' : 's'}. Raise your capacity to accept more.',
+                          );
+                        }
+
                         await widget.requestRepository.updateRequestStatus(
                           requestId: id,
                           status: status,
@@ -422,8 +429,16 @@ class _PendingRequestsScreen extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.check, color: Colors.green),
                         onPressed: () async {
-                          await onAction(r.id, RequestStatus.accepted);
-                          Navigator.of(context).pop();
+                          try {
+                            await onAction(r.id, RequestStatus.accepted);
+                            if (!context.mounted) return;
+                            Navigator.of(context).pop();
+                          } on SupervisorFullyBookedException catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.message)),
+                            );
+                          }
                         },
                       ),
                       IconButton(
