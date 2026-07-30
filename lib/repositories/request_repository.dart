@@ -81,8 +81,7 @@ class MemoryRequestRepository implements RequestRepository {
     required String staffId,
     required String ideaId,
   }) async {
-    final id = 'req-
-${_next++}';
+    final id = 'req-${_next++}';
     final req = ProjectRequest(
       id: id,
       studentId: studentId,
