@@ -124,6 +124,11 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
         title: const Text('Find a supervisor'),
         actions: [
           IconButton(
+            tooltip: 'My areas of interest',
+            icon: const Icon(Icons.interests_outlined),
+            onPressed: _editInterests,
+          ),
+          IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),
             onPressed: () => widget.authService.signOut(),
@@ -174,13 +179,17 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
                         padding: const EdgeInsets.only(bottom: 12),
                               child: StaffSummaryCard(
                           profile: profile,
+                          sharedInterestCount: _matchingService.sharedInterestCount(
+                            _user.interests,
+                            profile.areasOfInterest,
+                          ),
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) =>
                                         StaffProfileDetailScreen(
                                           profile: profile,
-                                          currentUser: widget.user,
+                                          currentUser: _user,
                                           requestRepository: widget.requestRepository,
                                         ),
                               ),
