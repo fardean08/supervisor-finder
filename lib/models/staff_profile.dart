@@ -9,6 +9,7 @@ class StaffProfile {
     required this.bio,
     required this.areasOfInterest,
     required this.projectIdeas,
+    this.maxStudents = 3,
   });
 
   final String uid;
@@ -18,6 +19,11 @@ class StaffProfile {
   final String bio;
   final List<String> areasOfInterest;
   final List<ProjectIdea> projectIdeas;
+
+  /// Maximum number of students this staff member is willing to supervise
+  /// at once. Once the number of accepted requests reaches this limit, new
+  /// requests are blocked and the profile shows as "Fully booked".
+  final int maxStudents;
 
   factory StaffProfile.empty({
     required String uid,
@@ -50,6 +56,7 @@ class StaffProfile {
         (data['areasOfInterest'] as List<dynamic>? ?? const []),
       ),
       projectIdeas: projectIdeas,
+      maxStudents: data['maxStudents'] as int? ?? 3,
     );
   }
 
@@ -60,6 +67,7 @@ class StaffProfile {
       'department': department,
       'bio': bio,
       'areasOfInterest': areasOfInterest,
+      'maxStudents': maxStudents,
     };
   }
 
@@ -71,6 +79,7 @@ class StaffProfile {
     String? bio,
     List<String>? areasOfInterest,
     List<ProjectIdea>? projectIdeas,
+    int? maxStudents,
   }) {
     return StaffProfile(
       uid: uid ?? this.uid,
@@ -80,6 +89,7 @@ class StaffProfile {
       bio: bio ?? this.bio,
       areasOfInterest: areasOfInterest ?? this.areasOfInterest,
       projectIdeas: projectIdeas ?? this.projectIdeas,
+      maxStudents: maxStudents ?? this.maxStudents,
     );
   }
 }
