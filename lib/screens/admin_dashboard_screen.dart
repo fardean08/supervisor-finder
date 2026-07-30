@@ -6,6 +6,7 @@ import '../models/staff_profile.dart';
 import '../repositories/staff_repository.dart';
 import '../repositories/user_repository.dart';
 import '../services/auth_service.dart';
+import '../theme/theme_controller.dart';
 
 /// Read-only overview for coordinators: every staff profile, every
 /// student, and every request in the system.
@@ -16,12 +17,14 @@ class AdminDashboardScreen extends StatefulWidget {
     required this.staffRepository,
     required this.requestRepository,
     required this.userRepository,
+    required this.themeController,
   });
 
   final AuthService authService;
   final StaffRepository staffRepository;
   final dynamic requestRepository;
   final UserRepository userRepository;
+  final ThemeController themeController;
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -67,6 +70,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         appBar: AppBar(
           title: const Text('Coordinator dashboard'),
           actions: [
+            ValueListenableBuilder<ThemeMode>(
+              valueListenable: widget.themeController,
+              builder: (context, mode, _) => IconButton(
+                tooltip: mode == ThemeMode.dark ? 'Switch to light mode' : 'Switch to dark mode',
+                icon: Icon(mode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+                onPressed: widget.themeController.toggle,
+              ),
+            ),
             IconButton(
               tooltip: 'Sign out',
               icon: const Icon(Icons.logout),
