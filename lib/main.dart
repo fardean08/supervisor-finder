@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'repositories/staff_repository.dart';
 import 'repositories/request_repository.dart';
+import 'repositories/user_repository.dart';
 import 'screens/auth_gate.dart';
 import 'services/auth_service.dart';
 
@@ -34,15 +35,21 @@ class FypSupervisorFinderApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AuthService authService =
-        firebaseReady ? FirebaseAuthService() : LocalAuthService();
-
     final StaffRepository staffRepository =
         firebaseReady ? FirestoreStaffRepository() : MemoryStaffRepository();
 
     final requestRepository = firebaseReady
         ? FirestoreRequestRepository(staffRepository: staffRepository)
         : MemoryRequestRepository(staffRepository: staffRepository);
+
+    final UserRepository userRepository =
+        firebaseReady ? FirestoreUserRepository() : MemoryUserRepository();
+
+    final AuthService authService = firebaseReady
+        ? FirebaseAuthService()
+        : LocalAuthService(
+            onUserChanged: (user) => (userRepository as MemoryUserRepository).upsert(user),
+          );
 
     return MaterialApp(
       title: 'FYP Supervisor Finder',
@@ -93,6 +100,7 @@ class FypSupervisorFinderApp extends StatelessWidget {
         authService: authService,
         staffRepository: staffRepository,
         requestRepository: requestRepository,
+        userRepository: userRepository,
         firebaseReady: firebaseReady,
       ),
     );
