@@ -17,6 +17,7 @@ class StaffDashboardScreen extends StatefulWidget {
     required this.user,
     required this.authService,
     required this.repository,
+    required this.requestRepository,
     required this.firebaseReady,
   });
 
@@ -323,6 +324,54 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                 ],
               ),
             ),
+    );
+  }
+}
+
+class _PendingRequestsScreen extends StatelessWidget {
+  const _PendingRequestsScreen({
+    required this.requests,
+    required this.onAction,
+  });
+
+  final List<ProjectRequest> requests;
+  final Future<void> Function(String id, RequestStatus status) onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Pending requests')),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: requests.length,
+        itemBuilder: (context, index) {
+          final r = requests[index];
+          return Card(
+            child: ListTile(
+              title: Text('Student: ${r.studentId}'),
+              subtitle: Text('Idea: ${r.ideaId} — ${r.status.name}'),
+              trailing: r.status == RequestStatus.pending
+                  ? Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(
+                        icon: const Icon(Icons.check, color: Colors.green),
+                        onPressed: () async {
+                          await onAction(r.id, RequestStatus.accepted);
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.red),
+                        onPressed: () async {
+                          await onAction(r.id, RequestStatus.declined);
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ])
+                  : Text(r.status.name),
+            ),
+          );
+        },
+      ),
     );
   }
 }
