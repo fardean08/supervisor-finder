@@ -9,6 +9,7 @@ import '../repositories/staff_repository.dart';
 import '../services/auth_service.dart';
 import '../theme/theme_controller.dart';
 import '../widgets/area_chips_editor.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/profile_completeness_indicator.dart';
 import '../widgets/project_idea_card.dart';
 import '../widgets/project_idea_form.dart';
@@ -392,14 +393,10 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                   ),
                   const SizedBox(height: 12),
                   if ((_profile?.projectIdeas ?? const []).isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Text(
-                          'No project ideas yet. Add one so students can find it.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
+                    const EmptyState(
+                      icon: Icons.lightbulb_outline,
+                      message: 'No project ideas yet.',
+                      hint: 'Add one so students can find it.',
                     )
                   else
                     for (final idea in _profile!.projectIdeas)
