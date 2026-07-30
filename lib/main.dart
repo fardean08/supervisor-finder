@@ -40,8 +40,9 @@ class FypSupervisorFinderApp extends StatelessWidget {
     final StaffRepository staffRepository =
         firebaseReady ? FirestoreStaffRepository() : MemoryStaffRepository();
 
-    final requestRepository =
-      firebaseReady ? FirestoreRequestRepository() : MemoryRequestRepository();
+    final requestRepository = firebaseReady
+        ? FirestoreRequestRepository(staffRepository: staffRepository)
+        : MemoryRequestRepository(staffRepository: staffRepository);
 
     return MaterialApp(
       title: 'FYP Supervisor Finder',
