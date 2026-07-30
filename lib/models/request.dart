@@ -1,4 +1,3 @@
-import 'package:meta/meta.dart';
 
 enum RequestStatus { pending, accepted, declined }
 
