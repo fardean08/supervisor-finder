@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/app_user.dart';
 import '../services/auth_service.dart';
+import '../widgets/area_chips_editor.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({
@@ -27,6 +28,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   UserRole _role = UserRole.student;
+  List<String> _interests = [];
 
   bool get _showSignUpShortcut {
     if (_isSignUp || _errorMessage == null) {
@@ -61,6 +63,7 @@ class _AuthScreenState extends State<AuthScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
           role: _role,
+          interests: _role == UserRole.student ? _interests : const [],
         );
       } else {
         await widget.authService.signIn(
@@ -149,6 +152,23 @@ class _AuthScreenState extends State<AuthScreen> {
                           setState(() => _role = selection.first);
                         },
                       ),
+                      if (_role == UserRole.student) ...[
+                        const SizedBox(height: 16),
+                        Text('Areas of interest', style: Theme.of(context).textTheme.labelLarge),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Used to rank supervisors with matching interests for you.',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 8),
+                        AreaChipsEditor(
+                          areas: _interests,
+                          onAdd: (area) => setState(() => _interests = [..._interests, area]),
+                          onRemove: (area) => setState(
+                            () => _interests = _interests.where((item) => item != area).toList(),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                     ],
                     TextFormField(
