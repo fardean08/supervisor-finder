@@ -46,6 +46,7 @@ class AuthGate extends StatelessWidget {
             user: user,
             authService: authService,
             repository: staffRepository,
+            requestRepository: requestRepository,
             firebaseReady: firebaseReady,
           );
         }
