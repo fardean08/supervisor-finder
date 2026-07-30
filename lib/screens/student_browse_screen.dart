@@ -8,6 +8,8 @@ import '../services/auth_service.dart';
 import '../services/matching_service.dart';
 import '../theme/theme_controller.dart';
 import '../widgets/area_chips_editor.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/skeleton_loader.dart';
 import '../widgets/staff_summary_card.dart';
 import 'staff_profile_detail_screen.dart';
 import 'student_requests_screen.dart';
@@ -41,6 +43,7 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
   Map<String, int> _acceptedCounts = {};
   bool _isLoading = true;
   String _query = '';
+  final Set<String> _selectedAreas = {};
   late AppUser _user;
 
   @override
@@ -72,10 +75,21 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
     return (_acceptedCounts[profile.uid] ?? 0) >= profile.maxStudents;
   }
 
+  /// All distinct areas of interest across every staff profile, sorted
+  /// alphabetically, used to build the filter chip row.
+  List<String> get _allAreas {
+    final areas = <String>{};
+    for (final profile in _profiles) {
+      areas.addAll(profile.areasOfInterest);
+    }
+    final sorted = areas.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return sorted;
+  }
+
   List<StaffProfile> get _filteredProfiles {
     final query = _query.toLowerCase();
 
-    final filtered = _query.trim().isEmpty
+    var filtered = _query.trim().isEmpty
         ? _profiles
         : _profiles.where((profile) {
             final matchesName = profile.name.toLowerCase().contains(query);
@@ -87,6 +101,12 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
 
             return matchesName || matchesDepartment || matchesArea || matchesIdea;
           }).toList();
+
+    if (_selectedAreas.isNotEmpty) {
+      filtered = filtered
+          .where((profile) => profile.areasOfInterest.any(_selectedAreas.contains))
+          .toList();
+    }
 
     return _matchingService.rankByInterest(filtered, _user.interests);
   }
@@ -178,7 +198,10 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? ListView(
+              padding: const EdgeInsets.all(16),
+              children: const [StaffListSkeleton()],
+            )
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(
@@ -204,16 +227,35 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
                     ),
                     onChanged: (value) => setState(() => _query = value),
                   ),
+                  if (_allAreas.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final area in _allAreas)
+                          FilterChip(
+                            label: Text(area),
+                            selected: _selectedAreas.contains(area),
+                            onSelected: (selected) => setState(() {
+                              if (selected) {
+                                _selectedAreas.add(area);
+                              } else {
+                                _selectedAreas.remove(area);
+                              }
+                            }),
+                          ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   if (profiles.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 32),
-                      child: Center(
-                        child: Text(
-                          'No staff profiles match your search yet.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
+                    EmptyState(
+                      icon: Icons.search_off,
+                      message: 'No staff profiles match your filters yet.',
+                      hint: _query.isNotEmpty || _selectedAreas.isNotEmpty
+                          ? 'Try clearing the search or area filters.'
+                          : null,
                     )
                   else
                     for (final profile in profiles)
