@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/app_user.dart';
 import '../models/project_idea.dart';
+import '../models/request.dart';
+import '../repositories/request_repository.dart';
 import '../models/staff_profile.dart';
 import '../repositories/staff_repository.dart';
 import '../services/auth_service.dart';
@@ -21,6 +23,7 @@ class StaffDashboardScreen extends StatefulWidget {
   final AppUser user;
   final AuthService authService;
   final StaffRepository repository;
+  final dynamic requestRepository;
   final bool firebaseReady;
 
   @override
@@ -32,6 +35,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   bool _isLoading = true;
   late final TextEditingController _departmentController;
   late final TextEditingController _bioController;
+  List<ProjectRequest> _incoming = [];
 
   @override
   void initState() {
@@ -39,6 +43,15 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
     _departmentController = TextEditingController();
     _bioController = TextEditingController();
     _load();
+    _loadRequests();
+  }
+
+  Future<void> _loadRequests() async {
+    try {
+      final list = await widget.requestRepository.fetchRequestsForStaff(widget.user.uid);
+      if (!mounted) return;
+      setState(() => _incoming = list);
+    } catch (_) {}
   }
 
   @override
@@ -146,6 +159,53 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
       appBar: AppBar(
         title: const Text('My supervisor profile'),
         actions: [
+          Stack(
+            children: [
+              IconButton(
+                tooltip: 'Pending requests',
+                icon: const Icon(Icons.mail_outline),
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => _PendingRequestsScreen(
+                      requests: _incoming,
+                      onAction: (id, status) async {
+                        await widget.requestRepository.updateRequestStatus(
+                          requestId: id,
+                          status: status,
+                        );
+                        if (status == RequestStatus.accepted) {
+                          // auto-decline other requests for same idea
+                          final accepted = _incoming.firstWhere((r) => r.id == id);
+                          for (final r in _incoming) {
+                            if (r.ideaId == accepted.ideaId && r.id != id) {
+                              await widget.requestRepository.updateRequestStatus(
+                                requestId: r.id,
+                                status: RequestStatus.declined,
+                              );
+                            }
+                          }
+                        }
+                        await _loadRequests();
+                      },
+                    ),
+                  ));
+                },
+              ),
+              if (_incoming.where((r) => r.status == RequestStatus.pending).isNotEmpty)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(10)),
+                    child: Text(
+                      '${_incoming.where((r) => r.status == RequestStatus.pending).length}',
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),
