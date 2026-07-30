@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/app_user.dart';
 import '../models/staff_profile.dart';
+import '../repositories/request_repository.dart';
 import '../widgets/area_chips_editor.dart';
 import '../widgets/project_idea_card.dart';
 
@@ -11,11 +12,13 @@ class StaffProfileDetailScreen extends StatelessWidget {
     required this.profile,
     required this.currentUser,
     required this.requestRepository,
+    this.isFullyBooked = false,
   });
 
   final StaffProfile profile;
   final AppUser currentUser;
   final dynamic requestRepository;
+  final bool isFullyBooked;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +79,28 @@ class StaffProfileDetailScreen extends StatelessWidget {
               ),
             ),
           ),
+          if (isFullyBooked) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFBE9E7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.event_busy, size: 18, color: Color(0xFFB3261E)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'This supervisor is fully booked and isn\'t accepting new requests.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFFB3261E)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Text('Project ideas', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
@@ -93,23 +118,32 @@ class StaffProfileDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: ProjectIdeaCard(
                   idea: idea,
-                  onRequest: () async {
-                    try {
-                      await requestRepository.createRequest(
-                        studentId: currentUser.uid,
-                        staffId: profile.uid,
-                        ideaId: idea.id,
-                      );
+                  onRequest: isFullyBooked
+                      ? null
+                      : () async {
+                          try {
+                            await requestRepository.createRequest(
+                              studentId: currentUser.uid,
+                              staffId: profile.uid,
+                              ideaId: idea.id,
+                            );
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Request sent')),
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Failed to send request')),
-                      );
-                    }
-                  },
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Request sent')),
+                            );
+                          } on SupervisorFullyBookedException catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.message)),
+                            );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Failed to send request')),
+                            );
+                          }
+                        },
                 ),
               ),
         ],
