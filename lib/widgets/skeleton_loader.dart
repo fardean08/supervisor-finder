@@ -64,16 +64,16 @@ class StaffCardSkeleton extends StatelessWidget {
           children: [
             const SkeletonBox(width: 48, height: 48, borderRadius: 24),
             const SizedBox(width: 14),
-            Expanded(
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SkeletonBox(width: 140, height: 16),
-                  const SizedBox(height: 8),
-                  const SkeletonBox(width: 90, height: 12),
-                  const SizedBox(height: 10),
+                  SkeletonBox(width: 140, height: 16),
+                  SizedBox(height: 8),
+                  SkeletonBox(width: 90, height: 12),
+                  SizedBox(height: 10),
                   Row(
-                    children: const [
+                    children: [
                       SkeletonBox(width: 60, height: 20, borderRadius: 10),
                       SizedBox(width: 6),
                       SkeletonBox(width: 60, height: 20, borderRadius: 10),
@@ -100,8 +100,8 @@ class StaffListSkeleton extends StatelessWidget {
     return Column(
       children: [
         for (var i = 0; i < count; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
             child: StaffCardSkeleton(),
           ),
       ],
