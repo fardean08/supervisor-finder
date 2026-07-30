@@ -248,7 +248,29 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(widget.user.name, style: Theme.of(context).textTheme.titleLarge),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.user.name,
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                              ),
+                              if (_isFullyBooked)
+                                Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFBE9E7),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text(
+                                    'Fully booked',
+                                    style: TextStyle(fontSize: 11, color: Color(0xFFB3261E)),
+                                  ),
+                                ),
+                            ],
+                          ),
                           Text(widget.user.email, style: const TextStyle(color: Colors.grey)),
                           const SizedBox(height: 16),
                           TextField(
@@ -260,6 +282,43 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                             controller: _bioController,
                             decoration: const InputDecoration(labelText: 'Short bio'),
                             maxLines: 3,
+                          ),
+                          const SizedBox(height: 16),
+                          Text('Supervision capacity', style: Theme.of(context).textTheme.titleSmall),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Currently supervising $_acceptedCount of $_maxStudents students.',
+                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              IconButton.filledTonal(
+                                icon: const Icon(Icons.remove),
+                                onPressed: _maxStudents > _acceptedCount && _maxStudents > 1
+                                    ? () => setState(() => _maxStudents--)
+                                    : null,
+                              ),
+                              SizedBox(
+                                width: 48,
+                                child: Text(
+                                  '$_maxStudents',
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                              ),
+                              IconButton.filledTonal(
+                                icon: const Icon(Icons.add),
+                                onPressed: () => setState(() => _maxStudents++),
+                              ),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Max students you can supervise at once',
+                                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           Align(
