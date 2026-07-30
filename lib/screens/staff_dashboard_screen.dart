@@ -8,6 +8,7 @@ import '../repositories/request_repository.dart';
 import '../repositories/staff_repository.dart';
 import '../services/auth_service.dart';
 import '../widgets/area_chips_editor.dart';
+import '../widgets/profile_completeness_indicator.dart';
 import '../widgets/project_idea_card.dart';
 import '../widgets/project_idea_form.dart';
 
@@ -279,6 +280,10 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                             ],
                           ),
                           Text(widget.user.email, style: const TextStyle(color: Colors.grey)),
+                          if (_profile != null) ...[
+                            const SizedBox(height: 14),
+                            ProfileCompletenessIndicator(profile: _profile!),
+                          ],
                           const SizedBox(height: 16),
                           TextField(
                             controller: _departmentController,
