@@ -1,8 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/request.dart';
+import '../repositories/staff_repository.dart';
+
+/// Thrown by [RequestRepository.createRequest] when the target staff member
+/// has already reached their maximum number of accepted students.
+class SupervisorFullyBookedException implements Exception {
+  const SupervisorFullyBookedException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
 
 abstract class RequestRepository {
+  /// Creates a pending request, unless the staff member is already at
+  /// capacity (see [StaffProfile.maxStudents]), in which case a
+  /// [SupervisorFullyBookedException] is thrown and no request is created.
   Future<ProjectRequest> createRequest({
     required String studentId,
     required String staffId,
@@ -12,6 +27,10 @@ abstract class RequestRepository {
   Future<List<ProjectRequest>> fetchRequestsForStaff(String staffId);
 
   Future<List<ProjectRequest>> fetchRequestsForStudent(String studentId);
+
+  /// All requests across every staff member and student. Used to compute
+  /// capacity/"fully booked" status and for the admin dashboard.
+  Future<List<ProjectRequest>> fetchAllRequests();
 
   Future<void> updateRequestStatus({
     required String requestId,
