@@ -13,6 +13,7 @@ class StudentBrowseScreen extends StatefulWidget {
     required this.user,
     required this.authService,
     required this.repository,
+    required this.requestRepository,
     required this.firebaseReady,
   });
 
