@@ -9,6 +9,7 @@ import '../services/matching_service.dart';
 import '../widgets/area_chips_editor.dart';
 import '../widgets/staff_summary_card.dart';
 import 'staff_profile_detail_screen.dart';
+import 'student_requests_screen.dart';
 
 class StudentBrowseScreen extends StatefulWidget {
   const StudentBrowseScreen({
@@ -138,6 +139,21 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
       appBar: AppBar(
         title: const Text('Find a supervisor'),
         actions: [
+          IconButton(
+            tooltip: 'My requests',
+            icon: const Icon(Icons.receipt_long_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => StudentRequestsScreen(
+                    studentId: _user.uid,
+                    staffRepository: widget.repository,
+                    requestRepository: widget.requestRepository,
+                  ),
+                ),
+              );
+            },
+          ),
           IconButton(
             tooltip: 'My areas of interest',
             icon: const Icon(Icons.interests_outlined),
