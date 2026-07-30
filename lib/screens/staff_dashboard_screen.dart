@@ -7,6 +7,7 @@ import '../models/staff_profile.dart';
 import '../repositories/request_repository.dart';
 import '../repositories/staff_repository.dart';
 import '../services/auth_service.dart';
+import '../theme/theme_controller.dart';
 import '../widgets/area_chips_editor.dart';
 import '../widgets/profile_completeness_indicator.dart';
 import '../widgets/project_idea_card.dart';
@@ -20,6 +21,7 @@ class StaffDashboardScreen extends StatefulWidget {
     required this.repository,
     required this.requestRepository,
     required this.firebaseReady,
+    required this.themeController,
   });
 
   final AppUser user;
@@ -27,6 +29,7 @@ class StaffDashboardScreen extends StatefulWidget {
   final StaffRepository repository;
   final dynamic requestRepository;
   final bool firebaseReady;
+  final ThemeController themeController;
 
   @override
   State<StaffDashboardScreen> createState() => _StaffDashboardScreenState();
