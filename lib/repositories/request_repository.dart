@@ -39,13 +39,31 @@ abstract class RequestRepository {
 }
 
 class FirestoreRequestRepository implements RequestRepository {
-  FirestoreRequestRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreRequestRepository({
+    required this.staffRepository,
+    FirebaseFirestore? firestore,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
+  final StaffRepository staffRepository;
 
   CollectionReference<Map<String, dynamic>> get _requests =>
       _firestore.collection('projectRequests');
+
+  Future<void> _ensureCapacity(String staffId) async {
+    final profile = await staffRepository.fetchProfile(staffId);
+    if (profile == null) return;
+
+    final existing = await fetchRequestsForStaff(staffId);
+    final acceptedCount =
+        existing.where((r) => r.status == RequestStatus.accepted).length;
+
+    if (acceptedCount >= profile.maxStudents) {
+      throw SupervisorFullyBookedException(
+        '${profile.name} is fully booked and cannot accept new requests.',
+      );
+    }
+  }
 
   @override
   Future<ProjectRequest> createRequest({
@@ -53,6 +71,8 @@ class FirestoreRequestRepository implements RequestRepository {
     required String staffId,
     required String ideaId,
   }) async {
+    await _ensureCapacity(staffId);
+
     final doc = await _requests.add({
       'studentId': studentId,
       'staffId': staffId,
@@ -82,6 +102,14 @@ class FirestoreRequestRepository implements RequestRepository {
   }
 
   @override
+  Future<List<ProjectRequest>> fetchAllRequests() async {
+    final snap = await _requests.get();
+    return snap.docs
+        .map((d) => ProjectRequest.fromMap(d.id, d.data()))
+        .toList();
+  }
+
+  @override
   Future<void> updateRequestStatus({
     required String requestId,
     required RequestStatus status,
@@ -91,8 +119,26 @@ class FirestoreRequestRepository implements RequestRepository {
 }
 
 class MemoryRequestRepository implements RequestRepository {
+  MemoryRequestRepository({required this.staffRepository});
+
+  final StaffRepository staffRepository;
   final Map<String, ProjectRequest> _store = {};
   int _next = 1;
+
+  Future<void> _ensureCapacity(String staffId) async {
+    final profile = await staffRepository.fetchProfile(staffId);
+    if (profile == null) return;
+
+    final acceptedCount = _store.values
+        .where((r) => r.staffId == staffId && r.status == RequestStatus.accepted)
+        .length;
+
+    if (acceptedCount >= profile.maxStudents) {
+      throw SupervisorFullyBookedException(
+        '${profile.name} is fully booked and cannot accept new requests.',
+      );
+    }
+  }
 
   @override
   Future<ProjectRequest> createRequest({
@@ -100,6 +146,8 @@ class MemoryRequestRepository implements RequestRepository {
     required String staffId,
     required String ideaId,
   }) async {
+    await _ensureCapacity(staffId);
+
     final id = 'req-${_next++}';
     final req = ProjectRequest(
       id: id,
@@ -121,6 +169,11 @@ class MemoryRequestRepository implements RequestRepository {
   @override
   Future<List<ProjectRequest>> fetchRequestsForStudent(String studentId) async {
     return _store.values.where((r) => r.studentId == studentId).toList();
+  }
+
+  @override
+  Future<List<ProjectRequest>> fetchAllRequests() async {
+    return List<ProjectRequest>.from(_store.values);
   }
 
   @override
