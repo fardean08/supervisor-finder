@@ -12,6 +12,7 @@ class AuthGate extends StatelessWidget {
     super.key,
     required this.authService,
     required this.staffRepository,
+    required this.requestRepository,
     required this.firebaseReady,
   });
 
