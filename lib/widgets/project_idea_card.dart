@@ -8,6 +8,7 @@ class ProjectIdeaCard extends StatelessWidget {
     required this.idea,
     this.onEdit,
     this.onDelete,
+    this.onRequest,
   });
 
   final ProjectIdea idea;
