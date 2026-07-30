@@ -36,6 +36,12 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   late final TextEditingController _departmentController;
   late final TextEditingController _bioController;
   List<ProjectRequest> _incoming = [];
+  int _maxStudents = 3;
+
+  int get _acceptedCount =>
+      _incoming.where((r) => r.status == RequestStatus.accepted).length;
+
+  bool get _isFullyBooked => _acceptedCount >= _maxStudents;
 
   @override
   void initState() {
@@ -74,6 +80,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
       _profile = profile;
       _departmentController.text = profile.department;
       _bioController.text = profile.bio;
+      _maxStudents = profile.maxStudents;
       _isLoading = false;
     });
   }
@@ -83,12 +90,14 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
       uid: widget.user.uid,
       department: _departmentController.text.trim(),
       bio: _bioController.text.trim(),
+      maxStudents: _maxStudents,
     );
 
     setState(() {
       _profile = _profile?.copyWith(
         department: _departmentController.text.trim(),
         bio: _bioController.text.trim(),
+        maxStudents: _maxStudents,
       );
     });
 
