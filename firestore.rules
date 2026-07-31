@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Account records. Students browsing need to read staff info, and the
+    // admin dashboard reads every account, so reads are open to anyone
+    // signed in — but you can only create or edit your own record (set at
+    // sign-up, interests updated later from the browse screen).
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(uid);
+      allow delete: if false;
+    }
+
+    // Staff profiles work the same way: every student needs to read every
+    // profile to browse for a supervisor, but only the staff member who
+    // owns a profile (and its project ideas) can change it.
+    match /staffProfiles/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(uid);
+      allow delete: if false;
+
+      match /projectIdeas/{ideaId} {
+        allow read: if isSignedIn();
+        allow write: if isOwner(uid);
+      }
+    }
+
+    // Requests: a student can only create a request as themselves, and
+    // only the staff member the request is addressed to can update its
+    // status (accept/decline). Reads are open so both sides — and the
+    // admin dashboard — can see request history.
+    match /projectRequests/{requestId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.staffId == request.auth.uid;
+      allow delete: if false;
+    }
+  }
+}
