@@ -13,6 +13,7 @@ void main() {
   late MemoryStaffRepository staffRepository;
   late MemoryRequestRepository requestRepository;
   late LocalAuthService authService;
+  late ThemeController themeController;
 
   const student = AppUser(
     uid: 'student-1',
@@ -26,6 +27,7 @@ void main() {
     staffRepository = MemoryStaffRepository();
     requestRepository = MemoryRequestRepository(staffRepository: staffRepository);
     authService = LocalAuthService();
+    themeController = ThemeController();
 
     // Matching supervisor: shares 2 interests with the student.
     await staffRepository.fetchOrCreateProfile(
@@ -71,12 +73,30 @@ void main() {
           repository: staffRepository,
           requestRepository: requestRepository,
           firebaseReady: false,
-          themeController: ThemeController(),
+          themeController: themeController,
         ),
       ),
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('dark mode toggle switches ThemeMode and updates the icon', (tester) async {
+    await pumpBrowseScreen(tester);
+
+    expect(themeController.value, ThemeMode.light);
+    expect(find.byIcon(Icons.dark_mode_outlined), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.dark_mode_outlined));
+    await tester.pumpAndSettle();
+
+    expect(themeController.value, ThemeMode.dark);
+    expect(find.byIcon(Icons.light_mode_outlined), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.light_mode_outlined));
+    await tester.pumpAndSettle();
+
+    expect(themeController.value, ThemeMode.light);
+  });
 
   testWidgets('ranks matching supervisor first and shows shared interest badge', (tester) async {
     await pumpBrowseScreen(tester);

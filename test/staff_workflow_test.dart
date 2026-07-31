@@ -122,10 +122,16 @@ void main() {
 
     expect(find.text('2'), findsOneWidget); // pending-count badge
 
-    // Tap the mail icon itself rather than the tooltip-derived center — the
-    // unread-count badge sits in a Stack on top of part of the icon button
-    // and can otherwise steal the hit test.
-    await tester.tap(find.byIcon(Icons.mail_outline));
+    // The unread-count badge sits in a Stack directly on top of the mail
+    // icon button and wins the hit test at its exact center, so a plain
+    // tap never reaches the button. Trigger its onPressed directly instead.
+    tester
+        .widget<IconButton>(find.ancestor(
+          of: find.byIcon(Icons.mail_outline),
+          matching: find.byType(IconButton),
+        ))
+        .onPressed!();
+    await tester.pumpAndSettle();
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.check).first);
@@ -146,24 +152,31 @@ void main() {
       bio: '',
       maxStudents: 1,
     );
+    // Both requests are created while there's still room (capacity blocks
+    // creation, not just acceptance, so this has to happen before anything
+    // is accepted). Only once the first is accepted does the supervisor
+    // become fully booked — and that's what should block accepting the
+    // second, even though it was already sitting there as pending.
     final already = await requestRepository.createRequest(
       studentId: 'student-1',
       staffId: 'staff-1',
       ideaId: 'idea-1',
     );
-    await requestRepository.updateRequestStatus(requestId: already.id, status: RequestStatus.accepted);
     final second = await requestRepository.createRequest(
       studentId: 'student-2',
       staffId: 'staff-1',
       ideaId: 'idea-2',
     );
+    await requestRepository.updateRequestStatus(requestId: already.id, status: RequestStatus.accepted);
 
     await pumpDashboard(tester);
 
-    // Tap the mail icon itself rather than the tooltip-derived center — the
-    // unread-count badge sits in a Stack on top of part of the icon button
-    // and can otherwise steal the hit test.
-    await tester.tap(find.byIcon(Icons.mail_outline));
+    tester
+        .widget<IconButton>(find.ancestor(
+          of: find.byIcon(Icons.mail_outline),
+          matching: find.byType(IconButton),
+        ))
+        .onPressed!();
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.check));
