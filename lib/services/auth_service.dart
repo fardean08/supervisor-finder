@@ -159,12 +159,7 @@ class FirebaseAuthService implements AuthService {
 /// In-memory fallback used when Firebase isn't configured, so the app is
 /// still fully usable (with local-only data) straight after checkout.
 class LocalAuthService implements AuthService {
-  LocalAuthService({this.onUserChanged}) {
-    // Delayed by a microtask so AuthGate's StreamBuilder gets a moment in
-    // "waiting" state first, same as it would with the real Firebase
-    // stream, instead of jumping straight to "signed out" synchronously.
-    Future<void>.microtask(() => _controller.add(_currentUser));
-  }
+  LocalAuthService({this.onUserChanged});
 
   final StreamController<AppUser?> _controller =
       StreamController<AppUser?>.broadcast();
@@ -178,8 +173,20 @@ class LocalAuthService implements AuthService {
 
   AppUser? _currentUser;
 
+  // A plain broadcast stream only reaches subscribers who are already
+  // listening when an event is added — it doesn't replay anything to a
+  // listener that shows up later. AuthGate's StreamBuilder subscribes
+  // once, when it first builds, so if any sign-in/out happened before
+  // that (or even just unlucky timing), it would otherwise be stuck
+  // showing the loading spinner forever, having missed the one event
+  // that would've told it who's signed in. Yielding the current value
+  // first means every new subscriber gets the real state immediately,
+  // no matter when they start listening.
   @override
-  Stream<AppUser?> get authStateChanges => _controller.stream;
+  Stream<AppUser?> get authStateChanges async* {
+    yield _currentUser;
+    yield* _controller.stream;
+  }
 
   @override
   Future<AppUser> signUp({
