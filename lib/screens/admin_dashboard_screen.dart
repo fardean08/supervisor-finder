@@ -43,6 +43,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _load() async {
+    // There's no backend "give me the whole system" endpoint, so this
+    // just pulls the three collections independently and stitches them
+    // together client-side (matching staffId/studentId by hand below).
+    // Fine at this app's scale; would need real joins/pagination if the
+    // number of staff/students/requests ever got large.
     final staff = await widget.staffRepository.fetchAllProfiles();
     final users = await widget.userRepository.fetchAllUsers();
     final requests = await widget.requestRepository.fetchAllRequests();
