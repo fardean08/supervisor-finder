@@ -19,8 +19,12 @@ jobs:
       - name: Generate JUnit report
         if: ${{ !cancelled() }}
         run: |
+          set -o pipefail
           dart pub global activate junitreport
-          flutter test --reporter json | dart pub global run junitreport:tojunit --output test-report.xml
+          flutter test --reporter json > test-events.json
+          dart pub global run junitreport:tojunit --input test-events.json --output test-report.xml
+          echo "Generated test-report.xml with $(grep -c '<testcase' test-report.xml) testcases:"
+          cat test-report.xml
       - name: Publish test results
         if: ${{ !cancelled() }}
         uses: dorny/test-reporter@v1
