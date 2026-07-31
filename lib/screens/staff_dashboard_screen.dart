@@ -192,6 +192,10 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                     builder: (context) => _PendingRequestsScreen(
                       requests: _incoming,
                       onAction: (id, status) async {
+                        // Same capacity rule as request creation, but checked
+                        // again here — a staff member accepting a request is
+                        // the other place a supervisor could go over their
+                        // own limit, so it needs the same guard.
                         if (status == RequestStatus.accepted && _isFullyBooked) {
                           throw SupervisorFullyBookedException(
                             'You are already supervising $_maxStudents student${_maxStudents == 1 ? '' : 's'}. Raise your capacity to accept more.',
@@ -203,7 +207,10 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                           status: status,
                         );
                         if (status == RequestStatus.accepted) {
-                          // auto-decline other requests for same idea
+                          // One project idea, one student: accepting a request
+                          // automatically declines everyone else who asked
+                          // about the same idea, rather than leaving them
+                          // pending forever.
                           final accepted = _incoming.firstWhere((r) => r.id == id);
                           for (final r in _incoming) {
                             if (r.ideaId == accepted.ideaId && r.id != id) {
