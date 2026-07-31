@@ -469,6 +469,7 @@ class _PendingRequestsScreen extends StatelessWidget {
                         icon: const Icon(Icons.close, color: Colors.red),
                         onPressed: () async {
                           await onAction(r.id, RequestStatus.declined);
+                          if (!context.mounted) return;
                           Navigator.of(context).pop();
                         },
                       ),

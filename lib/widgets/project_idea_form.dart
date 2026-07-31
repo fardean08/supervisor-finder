@@ -47,7 +47,7 @@ Future<ProjectIdea?> showProjectIdeaForm(
                     if (areaOptions.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: selectedArea.isEmpty ? null : selectedArea,
+                        initialValue: selectedArea.isEmpty ? null : selectedArea,
                         decoration: const InputDecoration(labelText: 'Related area (optional)'),
                         items: [
                           for (final area in {...areaOptions, if (selectedArea.isNotEmpty) selectedArea})
