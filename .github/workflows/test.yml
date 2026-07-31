@@ -2,6 +2,7 @@ name: Flutter Tests
 on: [push, pull_request]
 permissions:
   contents: read
+  actions: read
   checks: write
 jobs:
   test:
@@ -16,12 +17,12 @@ jobs:
       - run: flutter analyze
       - run: flutter test --reporter expanded
       - name: Generate JUnit report
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
           dart pub global activate junitreport
           flutter test --reporter json | dart pub global run junitreport:tojunit --output test-report.xml
       - name: Publish test results
-        if: always()
+        if: ${{ !cancelled() }}
         uses: dorny/test-reporter@v1
         with:
           name: Flutter Test Results
