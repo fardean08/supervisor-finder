@@ -1,5 +1,8 @@
 name: Flutter Tests
 on: [push, pull_request]
+permissions:
+  contents: read
+  checks: write
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -12,3 +15,15 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test --reporter expanded
+      - name: Generate JUnit report
+        if: always()
+        run: |
+          dart pub global activate junitreport
+          flutter test --reporter json | dart pub global run junitreport:tojunit --output test-report.xml
+      - name: Publish test results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Flutter Test Results
+          path: test-report.xml
+          reporter: java-junit
