@@ -160,6 +160,9 @@ class FirebaseAuthService implements AuthService {
 /// still fully usable (with local-only data) straight after checkout.
 class LocalAuthService implements AuthService {
   LocalAuthService({this.onUserChanged}) {
+    // Delayed by a microtask so AuthGate's StreamBuilder gets a moment in
+    // "waiting" state first, same as it would with the real Firebase
+    // stream, instead of jumping straight to "signed out" synchronously.
     Future<void>.microtask(() => _controller.add(_currentUser));
   }
 
