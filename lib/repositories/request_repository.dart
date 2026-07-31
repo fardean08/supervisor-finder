@@ -14,6 +14,10 @@ class SupervisorFullyBookedException implements Exception {
   String toString() => message;
 }
 
+// Like StaffRepository, this has a Firestore implementation for real usage
+// and an in-memory one for running the app without Firebase set up. Both
+// implementations share the same capacity rule below, so a supervisor
+// can't be over-booked no matter which one is active.
 abstract class RequestRepository {
   /// Creates a pending request, unless the staff member is already at
   /// capacity (see [StaffProfile.maxStudents]), in which case a
@@ -50,6 +54,14 @@ class FirestoreRequestRepository implements RequestRepository {
   CollectionReference<Map<String, dynamic>> get _requests =>
       _firestore.collection('projectRequests');
 
+  // Reads the staff member's capacity and their current accepted count,
+  // then compares them. This is a plain read-then-write, not a Firestore
+  // transaction, so two students requesting at literally the same instant
+  // could in theory both slip through. That's an acceptable trade-off for
+  // an app this size (a handful of requests a day, not a ticket queue) —
+  // a transactional version would need a query inside transaction.get(),
+  // which adds a fair bit of complexity for a race that's very unlikely
+  // to happen here in practice.
   Future<void> _ensureCapacity(String staffId) async {
     final profile = await staffRepository.fetchProfile(staffId);
     if (profile == null) return;
@@ -71,6 +83,8 @@ class FirestoreRequestRepository implements RequestRepository {
     required String staffId,
     required String ideaId,
   }) async {
+    // Capacity is enforced here, not just hidden in the UI, so a request
+    // can't sneak through even if the app has stale data on screen.
     await _ensureCapacity(staffId);
 
     final doc = await _requests.add({
@@ -125,6 +139,8 @@ class MemoryRequestRepository implements RequestRepository {
   final Map<String, ProjectRequest> _store = {};
   int _next = 1;
 
+  // Same capacity rule as the Firestore version above, kept in sync so
+  // the demo (no Firebase configured) enforces the same business logic.
   Future<void> _ensureCapacity(String staffId) async {
     final profile = await staffRepository.fetchProfile(staffId);
     if (profile == null) return;
