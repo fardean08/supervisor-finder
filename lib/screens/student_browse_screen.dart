@@ -86,6 +86,12 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
     return sorted;
   }
 
+  // Search text, area filter chips, and interest-based ranking all stack
+  // on top of each other: search/chips narrow the list down first, then
+  // whatever's left gets sorted by overlap with the student's interests.
+  // Keeping them as separate steps (rather than one big filter+sort
+  // expression) makes it easier to reason about and to unit test each
+  // piece on its own — see MatchingService for the ranking logic itself.
   List<StaffProfile> get _filteredProfiles {
     final query = _query.toLowerCase();
 
@@ -102,6 +108,10 @@ class _StudentBrowseScreenState extends State<StudentBrowseScreen> {
             return matchesName || matchesDepartment || matchesArea || matchesIdea;
           }).toList();
 
+    // Area chips use OR, not AND — a profile matches if it has any one of
+    // the selected areas, not all of them. Feels more useful when a
+    // student picks two or three broad interests instead of one narrow
+    // combination that might match nobody.
     if (_selectedAreas.isNotEmpty) {
       filtered = filtered
           .where((profile) => profile.areasOfInterest.any(_selectedAreas.contains))
