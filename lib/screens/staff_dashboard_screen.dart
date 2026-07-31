@@ -317,6 +317,10 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                           const SizedBox(height: 8),
                           Row(
                             children: [
+                              // Can't drop the limit below how many students are
+                              // already accepted, and can't go below 1 either —
+                              // both would leave the number on screen not
+                              // matching what the capacity rule would enforce.
                               IconButton.filledTonal(
                                 icon: const Icon(Icons.remove),
                                 onPressed: _maxStudents > _acceptedCount && _maxStudents > 1
