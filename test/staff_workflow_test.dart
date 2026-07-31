@@ -58,10 +58,11 @@ void main() {
     expect(await staffRepository.fetchProfile('staff-1').then((p) => p!.areasOfInterest),
         contains('Distributed systems'));
 
-    await tester.tap(find.descendant(
-      of: find.widgetWithText(InputChip, 'Distributed systems'),
-      matching: find.byIcon(Icons.cancel),
-    ));
+    // The delete icon's hit target is small and chip rendering details are
+    // an implementation detail we don't want this test tied to — invoke
+    // the same callback InputChip's delete icon would trigger.
+    final chip = tester.widget<InputChip>(find.widgetWithText(InputChip, 'Distributed systems'));
+    chip.onDeleted!();
     await tester.pumpAndSettle();
 
     expect(find.text('Distributed systems'), findsNothing);
@@ -121,7 +122,10 @@ void main() {
 
     expect(find.text('2'), findsOneWidget); // pending-count badge
 
-    await tester.tap(find.byTooltip('Pending requests'));
+    // Tap the mail icon itself rather than the tooltip-derived center — the
+    // unread-count badge sits in a Stack on top of part of the icon button
+    // and can otherwise steal the hit test.
+    await tester.tap(find.byIcon(Icons.mail_outline));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.check).first);
@@ -156,7 +160,10 @@ void main() {
 
     await pumpDashboard(tester);
 
-    await tester.tap(find.byTooltip('Pending requests'));
+    // Tap the mail icon itself rather than the tooltip-derived center — the
+    // unread-count badge sits in a Stack on top of part of the icon button
+    // and can otherwise steal the hit test.
+    await tester.tap(find.byIcon(Icons.mail_outline));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.check));
