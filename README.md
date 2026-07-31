@@ -53,14 +53,16 @@ UI path.
 
 ## Getting started
 
-This repo doesn't include platform folders (`android/`, `ios/`, `web/`,
-`macos/`) by default, so run whichever one you need once:
+Web support is included, so this runs straight out of a fresh clone:
 
 ```bash
 flutter pub get
-flutter create . --platforms=android,ios   # or web, macos — whatever you're targeting
-flutter run
+flutter run -d chrome
 ```
+
+Want a mobile build too? This repo doesn't include `android/`, `ios/`, or
+`macos/` folders — add whichever one you need with
+`flutter create . --platforms=android,ios` (etc.) first.
 
 To enable real accounts and shared data between users, see
 [`docs/firebase-setup.md`](docs/firebase-setup.md). Without it, the app runs
