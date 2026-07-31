@@ -7,6 +7,11 @@ import '../models/staff_profile.dart';
 class MatchingService {
   const MatchingService();
 
+  /// Interests both lists have in common, in the staff member's original
+  /// casing (so the badge shows "Graph Theory" the way the supervisor
+  /// wrote it, not however the student happened to type it). Comparison
+  /// is case-insensitive; `seen` just guards against a student somehow
+  /// having the same interest listed twice from double-counting a match.
   List<String> sharedInterests(
     List<String> studentInterests,
     List<String> staffAreas,
