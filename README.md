@@ -64,11 +64,33 @@ Want a mobile build too? This repo doesn't include `android/`, `ios/`, or
 `macos/` folders — add whichever one you need with
 `flutter create . --platforms=android,ios` (etc.) first.
 
-To enable real accounts and shared data between users, see
-[`docs/firebase-setup.md`](docs/firebase-setup.md). Without it, the app runs
-entirely on in-memory data so it's still demoable with no setup.
+Firebase is already linked (project `fysa-2abff`) — `lib/firebase_options.dart`
+has real config, Firestore is provisioned, and `firestore.rules` is deployed,
+so running the app on web connects to the real backend by default (accounts
+and data persist and are shared across browsers/devices). The in-memory
+fallback in `main.dart` only kicks in if `Firebase.initializeApp()` fails —
+e.g. on a platform that hasn't been configured via `flutterfire configure`
+(only `web` has been). See [`docs/firebase-setup.md`](docs/firebase-setup.md)
+if you ever need to point this at a different Firebase project from scratch.
+
+## Demo accounts
+
+The live Firebase project is already seeded with data, so you can log
+straight in instead of building everything up from an empty account. All use
+the password `password123`:
+
+| Email | Role | Notes |
+|---|---|---|
+| `alice.chen@example.ac.uk` | Staff | 2 project ideas, has 1 pending request from Jamie |
+| `robert.osei@example.ac.uk` | Staff | 2 project ideas, no requests yet |
+| `maria.lopez@example.ac.uk` | Staff | Capacity set to 1 and already fully booked — good for demoing "Fully booked" |
+| `jamie.carter@example.ac.uk` | Student | Interests overlap with Robert's areas, so he should rank first when browsing |
+| `sam.coordinator@example.ac.uk` | Admin | Coordinator dashboard over all of the above |
 
 ## Try it
+
+Either sign in with a demo account above to see a populated app immediately,
+or walk through the full lifecycle from scratch:
 
 1. Sign up as **Staff** (e.g. "Dr. Amara Okafor").
 2. On the dashboard, add a couple of **areas of interest** (e.g. "Graph
